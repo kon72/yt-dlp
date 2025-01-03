@@ -933,10 +933,10 @@ class YoutubeDL:
                                      'Use "YoutubeDL.to_screen" instead')
         self._write_string(f'{self._bidi_workaround(message)}\n', self._out_files.out)
 
-    def to_screen(self, message, skip_eol=False, quiet=None, only_once=False):
+    def to_screen(self, message, skip_eol=False, quiet=None, only_once=False, stacklevel=1):
         """Print message to screen if not in quiet mode"""
         if self.params.get('logger'):
-            self.params['logger'].debug(message)
+            self.params['logger'].debug(message, stacklevel=stacklevel + 1)
             return
         if (self.params.get('quiet') if quiet is None else quiet) and not self.params.get('verbose'):
             return
@@ -944,11 +944,11 @@ class YoutubeDL:
             '{}{}'.format(self._bidi_workaround(message), ('' if skip_eol else '\n')),
             self._out_files.screen, only_once=only_once)
 
-    def to_stderr(self, message, only_once=False):
+    def to_stderr(self, message, only_once=False, stacklevel=1):
         """Print message to stderr"""
         assert isinstance(message, str)
         if self.params.get('logger'):
-            self.params['logger'].error(message)
+            self.params['logger'].error(message, stacklevel=stacklevel + 1)
         else:
             self._write_string(f'{self._bidi_workaround(message)}\n', self._out_files.error, only_once=only_once)
 
@@ -1063,26 +1063,26 @@ class YoutubeDL:
     def _format_err(self, *args, **kwargs):
         return self._format_text(self._out_files.error, self._allow_colors.error, *args, **kwargs)
 
-    def report_warning(self, message, only_once=False):
+    def report_warning(self, message, only_once=False, stacklevel=1):
         """
         Print the message to stderr, it will be prefixed with 'WARNING:'
         If stderr is a tty file the 'WARNING:' will be colored
         """
         if self.params.get('logger') is not None:
-            self.params['logger'].warning(message)
+            self.params['logger'].warning(message, stacklevel=stacklevel + 1)
         else:
             if self.params.get('no_warnings'):
                 return
-            self.to_stderr(f'{self._format_err("WARNING:", self.Styles.WARNING)} {message}', only_once)
+            self.to_stderr(f'{self._format_err("WARNING:", self.Styles.WARNING)} {message}', only_once, stacklevel=stacklevel + 1)
 
     def deprecation_warning(self, message, *, stacklevel=0):
         deprecation_warning(
             message, stacklevel=stacklevel + 1, printer=self.report_error, is_error=False)
 
-    def deprecated_feature(self, message):
+    def deprecated_feature(self, message, *, stacklevel=1):
         if self.params.get('logger') is not None:
             self.params['logger'].warning(f'Deprecated Feature: {message}')
-        self.to_stderr(f'{self._format_err("Deprecated Feature:", self.Styles.ERROR)} {message}', True)
+        self.to_stderr(f'{self._format_err("Deprecated Feature:", self.Styles.ERROR)} {message}', True, stacklevel=stacklevel + 1)
 
     def report_error(self, message, *args, **kwargs):
         """
@@ -1091,15 +1091,15 @@ class YoutubeDL:
         """
         self.trouble(f'{self._format_err("ERROR:", self.Styles.ERROR)} {message}', *args, **kwargs)
 
-    def write_debug(self, message, only_once=False):
+    def write_debug(self, message, only_once=False, stacklevel=1):
         """Log debug message or Print message to stderr"""
         if not self.params.get('verbose', False):
             return
         message = f'[debug] {message}'
         if self.params.get('logger'):
-            self.params['logger'].debug(message)
+            self.params['logger'].debug(message, stacklevel=stacklevel + 1)
         else:
-            self.to_stderr(message, only_once)
+            self.to_stderr(message, only_once, stacklevel=stacklevel + 1)
 
     def report_file_already_downloaded(self, file_name):
         """Report file has already been fully downloaded."""
